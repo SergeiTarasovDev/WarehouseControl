@@ -1,0 +1,12 @@
+version: '4'
+
+services:
+  postgres:
+    image: 'postgres:15'
+    container_name: 'java-postgres-ic'
+    ports:
+      - 5432:5432
+    environment:
+      - 'POSTGRES_USER=sa'
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
+      - 'POSTGRES_DB=java'
