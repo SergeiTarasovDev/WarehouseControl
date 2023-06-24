@@ -10,7 +10,7 @@
     </parent>
     <groupId>ru.teliontech</groupId>
     <artifactId>WarehouseControl</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>WarehouseControl</name>
     <description>WarehouseControl</description>
     <properties>
@@ -44,6 +44,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>1.7.0</version>
         </dependency>
 
     </dependencies>
