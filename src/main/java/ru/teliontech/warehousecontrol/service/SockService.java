@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ru.teliontech.warehousecontrol.dto.SockDto;
+import ru.teliontech.warehousecontrol.dto.SockQntDto;
 import ru.teliontech.warehousecontrol.entity.OperationType;
 import ru.teliontech.warehousecontrol.entity.Sock;
 import ru.teliontech.warehousecontrol.entity.TradingAction;
@@ -23,6 +24,12 @@ public class SockService {
     public static final Logger LOGGER = LoggerFactory.getLogger(SockService.class);
     public static final String MORE = "moreThan";
     public static final String LESS = "lessThan";
+    public static final String EXCMSG_NOT_FOUND = "Entity not found";
+    public static final String EXCMSG_FOUND = "An entry with this id already exists";
+    public static final String EXCMSG_QUANTITY_BIGGER_THAN_STOCK = "Quantity is bigger than stock";
+    public static final String EXCMSG_DUPLICATE_ENTITY = "Database include a few duplicate socks with current parameters";
+    public static final String EXCMSG_COTTONPART_NOT_RANGE = "The value of the cottonPart field does not fall within the range from 0 to 100";
+    public static final String EXCMSG_QUANTITY_LESS_THAN_ZERO = "The value of quantity field is less than 0";
 
     private final SockRepository sockRepository;
     private final TradingActionRepository tradingActionRepository;
@@ -56,31 +63,41 @@ public class SockService {
                 }
             }
         }
-        throw new EntityNotFoundException("Entity not found");
+        throw new EntityNotFoundException(EXCMSG_NOT_FOUND);
     }
 
-    public Optional<SockDto> income(SockDto inputSock) {
-        validateCottonPart(inputSock);
+    public Optional<SockQntDto> income(SockQntDto inputSock) {
+        validateCottonPart(mappingUtils.mapToSock(inputSock));
         validateQuantity(inputSock);
         return handleOperation(inputSock, OperationType.INCOME);
     }
 
-    public Optional<SockDto> outcome(SockDto inputSock) {
-        validateCottonPart(inputSock);
+    public Optional<SockQntDto> outcome(SockQntDto inputSock) {
+        validateCottonPart(mappingUtils.mapToSock(inputSock));
         validateQuantity(inputSock);
         return handleOperation(inputSock, OperationType.OUTCOME);
     }
 
-    public Optional<SockDto> handleOperation(SockDto inputSock, OperationType operationType) {
+    private Optional<SockQntDto> handleOperation(SockQntDto inputSock, OperationType operationType) {
         Sock foundSock = findSock(inputSock);
         calculateStock(inputSock, foundSock, operationType);
 
         sockRepository.save(foundSock);
         tradingActionRepository.save(createTradingAction(foundSock, inputSock.getQuantity(), operationType));
-        return Optional.ofNullable(mappingUtils.mapToSockDto(foundSock, inputSock.getQuantity()));
+        return Optional.ofNullable(mappingUtils.mapToSockQntDto(foundSock, inputSock.getQuantity()));
     }
 
-    private void calculateStock(SockDto inputSock, Sock foundSock, OperationType operationType) {
+    private Sock findSock(SockQntDto inputSock) {
+        List<Sock> socks = sockRepository.findByColorAndCottonPart(inputSock.getColor(), inputSock.getCottonPart());
+        if (socks.size() > 1) {
+            throw new DuplicateSocksException(EXCMSG_DUPLICATE_ENTITY);
+        } else if (socks.size() == 0) {
+            return mappingUtils.mapToSock(inputSock);
+        }
+        return socks.get(0);
+    }
+
+    private void calculateStock(SockQntDto inputSock, Sock foundSock, OperationType operationType) {
         if (operationType.equals(OperationType.INCOME)) {
             foundSock.setStock(foundSock.getStock() + inputSock.getQuantity());
         } else {
@@ -89,16 +106,6 @@ public class SockService {
             }
             foundSock.setStock(foundSock.getStock() - inputSock.getQuantity());
         }
-    }
-
-    private Sock findSock(SockDto inputSock) {
-        List<Sock> socks = sockRepository.findByColorAndCottonPart(inputSock.getColor(), inputSock.getCottonPart());
-        if (socks.size() > 1) {
-            throw new DuplicateSocksException("Database include a few duplicate socks with current parameters");
-        } else if (socks.size() == 0) {
-            return mappingUtils.mapToSock(inputSock);
-        }
-        return socks.get(0);
     }
 
     private TradingAction createTradingAction(Sock foundSock, int quantity, OperationType operationType) {
@@ -111,21 +118,21 @@ public class SockService {
     }
 
     public Optional<SockDto> createSock(SockDto sockDto) {
-        validateCottonPart(sockDto);
+        validateCottonPart(mappingUtils.mapToSock(sockDto));
         validateEntryExists(sockDto.getId());
         sockRepository.save(mappingUtils.mapToSock(sockDto));
         return Optional.of(sockDto);
     }
 
     public Optional<SockDto> updateSock(SockDto sockDto) {
-        validateCottonPart(sockDto);
+        validateCottonPart(mappingUtils.mapToSock(sockDto));
         validateEntryNonExists(sockDto.getId());
         sockRepository.save(mappingUtils.mapToSock((sockDto)));
         return Optional.of(sockDto);
     }
 
     public Optional<SockDto> deleteSock(long id) {
-        Sock foundSock = findSockById(id).orElseThrow(() -> new IllegalArgumentException("No record found with this ID"));
+        Sock foundSock = findSockById(id).orElseThrow(() -> new IllegalArgumentException(EXCMSG_NOT_FOUND));
         sockRepository.delete(foundSock);
         return Optional.of(mappingUtils.mapToSockDto(foundSock));
     }
@@ -134,32 +141,32 @@ public class SockService {
         return sockRepository.findById(id);
     }
 
-    private void validateCottonPart(SockDto sockDto) {
-        validateCottonPart(sockDto.getCottonPart());
+    private void validateCottonPart(Sock sock) {
+        validateCottonPart(sock.getCottonPart());
     }
 
     private void validateCottonPart(Integer cottonPart) {
         if (cottonPart < 0 || cottonPart > 100) {
-            throw new IllegalArgumentException("The value of the cottonPart field does not fall within the range from 0 to 100");
+            throw new IllegalArgumentException(EXCMSG_COTTONPART_NOT_RANGE);
         }
     }
-    private void validateQuantity(SockDto inputSock) {
+    private void validateQuantity(SockQntDto inputSock) {
         if (inputSock.getQuantity() < 0) {
-            throw new IllegalArgumentException("The value of quantity field is less than 0");
+            throw new IllegalArgumentException(EXCMSG_QUANTITY_LESS_THAN_ZERO);
         }
     }
 
     private void validateEntryExists(long id) {
         Optional<Sock> sock = sockRepository.findById(id);
         if (sock.isPresent()) {
-            throw new IllegalArgumentException("An entry with this id already exists");
+            throw new IllegalArgumentException(EXCMSG_FOUND);
         }
     }
 
     private void validateEntryNonExists(Long id) {
         Optional<Sock> sock = sockRepository.findById(id);
         if (sock.isEmpty()) {
-            throw new IllegalArgumentException("No record found with this ID");
+            throw new IllegalArgumentException(EXCMSG_NOT_FOUND);
         }
     }
 }
