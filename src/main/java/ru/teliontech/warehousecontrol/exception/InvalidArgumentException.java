@@ -6,10 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-public class DuplicateSocksException extends RuntimeException {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DuplicateSocksException.class);
+public class InvalidArgumentException extends RuntimeException {
+    private static final Logger LOGGER = LoggerFactory.getLogger(InvalidArgumentException.class);
 
-    public DuplicateSocksException(String message) {
+    public InvalidArgumentException(String message) {
         super(message);
         LOGGER.warn(message);
     }

@@ -9,12 +9,13 @@ import ru.teliontech.warehousecontrol.entity.OperationType;
 import ru.teliontech.warehousecontrol.entity.Sock;
 import ru.teliontech.warehousecontrol.entity.TradingAction;
 import ru.teliontech.warehousecontrol.exception.DuplicateSocksException;
+import ru.teliontech.warehousecontrol.exception.EntityNotFoundException;
+import ru.teliontech.warehousecontrol.exception.InvalidArgumentException;
 import ru.teliontech.warehousecontrol.exception.NegativeStockException;
 import ru.teliontech.warehousecontrol.repository.SockRepository;
 import ru.teliontech.warehousecontrol.repository.TradingActionRepository;
 import ru.teliontech.warehousecontrol.utils.MappingUtils;
 
-import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -92,7 +93,7 @@ public class SockService {
         if (socks.size() > 1) {
             throw new DuplicateSocksException(EXCMSG_DUPLICATE_ENTITY);
         } else if (socks.size() == 0) {
-            return mappingUtils.mapToSock(inputSock);
+            throw new EntityNotFoundException(EXCMSG_NOT_FOUND);
         }
         return socks.get(0);
     }
@@ -102,7 +103,7 @@ public class SockService {
             foundSock.setStock(foundSock.getStock() + inputSock.getQuantity());
         } else {
             if (inputSock.getQuantity() > foundSock.getStock()) {
-                throw new NegativeStockException("Quantity is bigger than stock");
+                throw new NegativeStockException(EXCMSG_QUANTITY_BIGGER_THAN_STOCK);
             }
             foundSock.setStock(foundSock.getStock() - inputSock.getQuantity());
         }
@@ -132,7 +133,7 @@ public class SockService {
     }
 
     public Optional<SockDto> deleteSock(long id) {
-        Sock foundSock = findSockById(id).orElseThrow(() -> new IllegalArgumentException(EXCMSG_NOT_FOUND));
+        Sock foundSock = findSockById(id).orElseThrow(() -> new EntityNotFoundException(EXCMSG_NOT_FOUND));
         sockRepository.delete(foundSock);
         return Optional.of(mappingUtils.mapToSockDto(foundSock));
     }
@@ -147,26 +148,26 @@ public class SockService {
 
     private void validateCottonPart(Integer cottonPart) {
         if (cottonPart < 0 || cottonPart > 100) {
-            throw new IllegalArgumentException(EXCMSG_COTTONPART_NOT_RANGE);
+            throw new InvalidArgumentException(EXCMSG_COTTONPART_NOT_RANGE);
         }
     }
     private void validateQuantity(SockQntDto inputSock) {
         if (inputSock.getQuantity() < 0) {
-            throw new IllegalArgumentException(EXCMSG_QUANTITY_LESS_THAN_ZERO);
+            throw new InvalidArgumentException(EXCMSG_QUANTITY_LESS_THAN_ZERO);
         }
     }
 
     private void validateEntryExists(long id) {
         Optional<Sock> sock = sockRepository.findById(id);
         if (sock.isPresent()) {
-            throw new IllegalArgumentException(EXCMSG_FOUND);
+            throw new InvalidArgumentException(EXCMSG_FOUND);
         }
     }
 
     private void validateEntryNonExists(Long id) {
         Optional<Sock> sock = sockRepository.findById(id);
         if (sock.isEmpty()) {
-            throw new IllegalArgumentException(EXCMSG_NOT_FOUND);
+            throw new InvalidArgumentException(EXCMSG_NOT_FOUND);
         }
     }
 }
