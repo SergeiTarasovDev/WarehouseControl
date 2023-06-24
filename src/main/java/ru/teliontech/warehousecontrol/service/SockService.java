@@ -53,13 +53,13 @@ public class SockService {
         switch (operation) {
             case MORE -> {
                 List<Sock> foundSocks = sockRepository.findAllByColorAndCottonPartGreaterThan(color, cottonPart);
-                if (null != foundSocks) {
+                if (!foundSocks.isEmpty()) {
                     return Optional.of(sockRepository.getStockSumByColorAndCottonPartGreaterThan(color, cottonPart));
                 }
             }
             case LESS -> {
                 List<Sock> foundSocks = sockRepository.findAllByColorAndCottonPartLessThan(color, cottonPart);
-                if (null != foundSocks) {
+                if (!foundSocks.isEmpty()) {
                     return Optional.of(sockRepository.getStockSumByColorAndCottonPartLessThan(color, cottonPart));
                 }
             }
