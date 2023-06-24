@@ -13,6 +13,7 @@ import ru.teliontech.warehousecontrol.repository.SockRepository;
 import ru.teliontech.warehousecontrol.repository.TradingActionRepository;
 import ru.teliontech.warehousecontrol.utils.MappingUtils;
 
+import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -38,75 +39,59 @@ public class SockService {
         return list.stream().map(mappingUtils::mapToSockDto).toList();
     }
 
-    public Integer getCountSocksWithParams(String color, String operation, Integer cottonPart) {
-        if (cottonPart < 0 || cottonPart > 100) {
-            return null;
-        }
+    public Optional<Integer> getCountSocksWithParams(String color, String operation, Integer cottonPart) {
+        validateCottonPart(cottonPart);
 
         switch (operation) {
             case MORE -> {
                 List<Sock> foundSocks = sockRepository.findAllByColorAndCottonPartGreaterThan(color, cottonPart);
                 if (null != foundSocks) {
-                    return sockRepository.getStockSumByColorAndCottonPartGreaterThan(color, cottonPart);
+                    return Optional.of(sockRepository.getStockSumByColorAndCottonPartGreaterThan(color, cottonPart));
                 }
             }
             case LESS -> {
                 List<Sock> foundSocks = sockRepository.findAllByColorAndCottonPartLessThan(color, cottonPart);
                 if (null != foundSocks) {
-                    return sockRepository.getStockSumByColorAndCottonPartLessThan(color, cottonPart);
+                    return Optional.of(sockRepository.getStockSumByColorAndCottonPartLessThan(color, cottonPart));
                 }
             }
         }
-        return null;
+        throw new EntityNotFoundException("Entity not found");
     }
 
-    public SockDto income(SockDto inputSock) {
-        if (isCottonPartInvalid(inputSock) || inputSock.getQuantity() < 0) {
-            return null;
-        }
+    public Optional<SockDto> income(SockDto inputSock) {
+        validateCottonPart(inputSock);
+        validateQuantity(inputSock);
         return handleOperation(inputSock, OperationType.INCOME);
     }
 
-    public SockDto outcome(SockDto inputSock) {
-        if (isCottonPartInvalid(inputSock) || inputSock.getQuantity() < 0) {
-            return null;
-        }
+    public Optional<SockDto> outcome(SockDto inputSock) {
+        validateCottonPart(inputSock);
+        validateQuantity(inputSock);
         return handleOperation(inputSock, OperationType.OUTCOME);
     }
 
-    public SockDto handleOperation(SockDto inputSock, OperationType operationType) {
-        Sock sock;
-        try {
-            sock = findSock(inputSock);
-        } catch (DuplicateSocksException e) {
-            LOGGER.info(e.getMessage());
-            return null;
-        }
+    public Optional<SockDto> handleOperation(SockDto inputSock, OperationType operationType) {
+        Sock foundSock = findSock(inputSock);
+        calculateStock(inputSock, foundSock, operationType);
 
-        try {
-            calculateStock(inputSock, sock, operationType);
-        } catch (NegativeStockException e) {
-            LOGGER.info(e.getMessage());
-            return null;
-        }
-
-        sockRepository.save(sock);
-        tradingActionRepository.save(createTradingAction(sock, inputSock.getQuantity(), operationType));
-        return mappingUtils.mapToSockDto(sock, inputSock.getQuantity());
+        sockRepository.save(foundSock);
+        tradingActionRepository.save(createTradingAction(foundSock, inputSock.getQuantity(), operationType));
+        return Optional.ofNullable(mappingUtils.mapToSockDto(foundSock, inputSock.getQuantity()));
     }
 
-    private void calculateStock(SockDto inputSock, Sock sock, OperationType operationType) throws NegativeStockException {
+    private void calculateStock(SockDto inputSock, Sock foundSock, OperationType operationType) {
         if (operationType.equals(OperationType.INCOME)) {
-            sock.setStock(sock.getStock() + inputSock.getQuantity());
+            foundSock.setStock(foundSock.getStock() + inputSock.getQuantity());
         } else {
-            if (inputSock.getQuantity() > sock.getStock()) {
+            if (inputSock.getQuantity() > foundSock.getStock()) {
                 throw new NegativeStockException("Quantity is bigger than stock");
             }
-            sock.setStock(sock.getStock() - inputSock.getQuantity());
+            foundSock.setStock(foundSock.getStock() - inputSock.getQuantity());
         }
     }
 
-    private Sock findSock(SockDto inputSock) throws DuplicateSocksException {
+    private Sock findSock(SockDto inputSock) {
         List<Sock> socks = sockRepository.findByColorAndCottonPart(inputSock.getColor(), inputSock.getCottonPart());
         if (socks.size() > 1) {
             throw new DuplicateSocksException("Database include a few duplicate socks with current parameters");
@@ -116,58 +101,65 @@ public class SockService {
         return socks.get(0);
     }
 
-    private TradingAction createTradingAction(Sock sock, int quantity, OperationType operationType) {
+    private TradingAction createTradingAction(Sock foundSock, int quantity, OperationType operationType) {
         TradingAction tradingAction = new TradingAction();
         tradingAction.setOperationTime(LocalDateTime.now());
         tradingAction.setOperationType(operationType);
         tradingAction.setQuantity(quantity);
-        tradingAction.setSock(sock);
+        tradingAction.setSock(foundSock);
         return tradingAction;
     }
 
-    public SockDto createSock(SockDto sockDto) {
-        if (isCottonPartInvalid(sockDto)) {
-            return null;
-        }
-
-        Optional<Sock> sock = sockRepository.findById(sockDto.getId());
-        if (sock.isPresent()) {
-            return null;
-        }
-
+    public Optional<SockDto> createSock(SockDto sockDto) {
+        validateCottonPart(sockDto);
+        validateEntryExists(sockDto.getId());
         sockRepository.save(mappingUtils.mapToSock(sockDto));
-        return sockDto;
+        return Optional.of(sockDto);
     }
 
-    public SockDto updateSock(SockDto sockDto) {
-        if (isCottonPartInvalid(sockDto)) {
-            return null;
-        }
-        Optional<Sock> foundSock = findSockById(sockDto.getId());
-        if (foundSock.isPresent()) {
-            sockRepository.save(mappingUtils.mapToSock((sockDto)));
-            return sockDto;
-        }
-        return null;
+    public Optional<SockDto> updateSock(SockDto sockDto) {
+        validateCottonPart(sockDto);
+        validateEntryNonExists(sockDto.getId());
+        sockRepository.save(mappingUtils.mapToSock((sockDto)));
+        return Optional.of(sockDto);
     }
 
-    private boolean isCottonPartInvalid(SockDto sockDto) {
-        int cottonPart = sockDto.getCottonPart();
-        return cottonPart < 0 || cottonPart > 100;
-    }
-
-    public SockDto deleteSock(long id) {
-        Optional<Sock> foundSock = findSockById(id);
-        if (foundSock.isPresent()) {
-            sockRepository.delete(foundSock.get());
-            return mappingUtils.mapToSockDto(foundSock.get());
-        }
-        return null;
+    public Optional<SockDto> deleteSock(long id) {
+        Sock foundSock = findSockById(id).orElseThrow(() -> new IllegalArgumentException("No record found with this ID"));
+        sockRepository.delete(foundSock);
+        return Optional.of(mappingUtils.mapToSockDto(foundSock));
     }
 
     private Optional<Sock> findSockById(long id) {
         return sockRepository.findById(id);
     }
 
+    private void validateCottonPart(SockDto sockDto) {
+        validateCottonPart(sockDto.getCottonPart());
+    }
 
+    private void validateCottonPart(Integer cottonPart) {
+        if (cottonPart < 0 || cottonPart > 100) {
+            throw new IllegalArgumentException("The value of the cottonPart field does not fall within the range from 0 to 100");
+        }
+    }
+    private void validateQuantity(SockDto inputSock) {
+        if (inputSock.getQuantity() < 0) {
+            throw new IllegalArgumentException("The value of quantity field is less than 0");
+        }
+    }
+
+    private void validateEntryExists(long id) {
+        Optional<Sock> sock = sockRepository.findById(id);
+        if (sock.isPresent()) {
+            throw new IllegalArgumentException("An entry with this id already exists");
+        }
+    }
+
+    private void validateEntryNonExists(Long id) {
+        Optional<Sock> sock = sockRepository.findById(id);
+        if (sock.isEmpty()) {
+            throw new IllegalArgumentException("No record found with this ID");
+        }
+    }
 }

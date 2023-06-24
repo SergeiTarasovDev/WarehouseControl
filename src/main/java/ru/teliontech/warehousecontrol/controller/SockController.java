@@ -5,8 +5,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.teliontech.warehousecontrol.dto.SockDto;
+import ru.teliontech.warehousecontrol.exception.DuplicateSocksException;
+import ru.teliontech.warehousecontrol.exception.NegativeStockException;
 import ru.teliontech.warehousecontrol.service.SockService;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.List;
 
 @RestController
@@ -30,57 +33,62 @@ public class SockController {
             @RequestParam String color,
             @RequestParam String operation,
             @RequestParam int cottonPart) {
-        Integer countSocks = sockService.getCountSocksWithParams(color, operation, cottonPart);
-        if (countSocks == null) {
+        try {
+            return ResponseEntity.ok(sockService.getCountSocksWithParams(color, operation, cottonPart).orElseThrow(() -> new NullPointerException("Unexpected null value")));
+        } catch (IllegalArgumentException | EntityNotFoundException | NullPointerException e) {
+            LOGGER.warn(e.getMessage());
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(countSocks);
     }
 
     @PostMapping("/income")
     public ResponseEntity<SockDto> incomeSock(@RequestBody SockDto sockDto) {
-        SockDto result = sockService.income(sockDto);
-        if (null == result) {
+        try {
+            return ResponseEntity.ok(sockService.income(sockDto).orElseThrow(() -> new NullPointerException("Unexpected null value")));
+        } catch (IllegalArgumentException | DuplicateSocksException | NegativeStockException | NullPointerException e) {
+            LOGGER.warn(e.getMessage());
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/outcome")
     public ResponseEntity<SockDto> outcomeSock(@RequestBody SockDto sockDto) {
-        SockDto result = sockService.outcome(sockDto);
-        if (null == result) {
+        try {
+            return ResponseEntity.ok(sockService.outcome(sockDto).orElseThrow(() -> new NullPointerException("Unexpected null value")));
+        } catch (IllegalArgumentException | DuplicateSocksException | NegativeStockException | NullPointerException e) {
+            LOGGER.warn(e.getMessage());
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(result);
     }
 
     @PostMapping()
     public ResponseEntity<SockDto> createSock(@RequestBody SockDto sockDto) {
-        SockDto createdSock = sockService.createSock(sockDto);
-        if (null == createdSock) {
+        try {
+            return ResponseEntity.ok(sockService.createSock(sockDto).orElseThrow(() -> new NullPointerException("Unexpected null value")));
+        } catch (IllegalArgumentException | NullPointerException e) {
+            LOGGER.warn(e.getMessage());
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(createdSock);
     }
 
     @PatchMapping()
     public ResponseEntity<SockDto> updateSock(@RequestBody SockDto sockDto) {
-        SockDto editedSock = sockService.updateSock(sockDto);
-        if (null == editedSock) {
+        try {
+            return ResponseEntity.ok(sockService.updateSock(sockDto).orElseThrow(() -> new NullPointerException("Unexpected null value")));
+        } catch (IllegalArgumentException | NullPointerException e) {
+            LOGGER.warn(e.getMessage());
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(editedSock);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<SockDto> deleteSock(@PathVariable long id) {
-        SockDto deletedSock = sockService.deleteSock(id);
-        if (null != deletedSock) {
-            return ResponseEntity.ok(deletedSock);
+        try {
+            return ResponseEntity.ok(sockService.deleteSock(id).orElseThrow(() -> new NullPointerException("Unexpected null value")));
+        } catch (IllegalArgumentException | NullPointerException e) {
+            LOGGER.warn(e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
-
-        return ResponseEntity.notFound().build();
     }
 }
 
