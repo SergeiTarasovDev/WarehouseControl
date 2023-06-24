@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.teliontech.warehousecontrol.dto.SockDto;
-import ru.teliontech.warehousecontrol.entity.Sock;
 import ru.teliontech.warehousecontrol.service.SockService;
 
 import java.util.List;

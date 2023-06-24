@@ -75,9 +75,9 @@ public class SockService {
     }
 
     public SockDto handleOperation(SockDto inputSock, OperationType operationType) {
-        Sock sock = null;
+        Sock sock;
         try {
-            sock = findSock(inputSock, operationType);
+            sock = findSock(inputSock);
         } catch (DuplicateSocksException e) {
             LOGGER.info(e.getMessage());
             return null;
@@ -106,7 +106,7 @@ public class SockService {
         }
     }
 
-    private Sock findSock(SockDto inputSock, OperationType operationType) throws DuplicateSocksException {
+    private Sock findSock(SockDto inputSock) throws DuplicateSocksException {
         List<Sock> socks = sockRepository.findByColorAndCottonPart(inputSock.getColor(), inputSock.getCottonPart());
         if (socks.size() > 1) {
             throw new DuplicateSocksException("Database include a few duplicate socks with current parameters");

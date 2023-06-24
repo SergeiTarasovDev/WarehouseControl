@@ -8,14 +8,14 @@ import java.util.List;
 
 public interface SockRepository extends JpaRepository<Sock, Long> {
 
-    @Query("" +
+    @Query(
             "SELECT SUM(s.stock) as sum " +
             "FROM Sock s " +
             "WHERE s.color = ?1 AND s.cottonPart > ?2 " +
             "GROUP BY s.color")
     Integer getStockSumByColorAndCottonPartGreaterThan(String color, int cottonPart);
 
-    @Query("" +
+    @Query(
             "SELECT SUM(s.stock) as sum " +
             "FROM Sock s " +
             "WHERE s.color = ?1 AND s.cottonPart < ?2 " +
