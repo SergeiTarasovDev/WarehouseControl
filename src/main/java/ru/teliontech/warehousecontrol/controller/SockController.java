@@ -90,7 +90,7 @@ public class SockController {
                     )
             }
     )
-    @PostMapping("/income")
+    @PatchMapping("/income")
     public ResponseEntity<SockQntDto> incomeSock(@RequestBody SockQntDto sockQntDto) {
         return ResponseEntity.ok(sockService.income(sockQntDto).orElseThrow(() -> new InvalidResultException(EXCMSG_UNEXPECTED_VALUE)));
     }
@@ -114,7 +114,7 @@ public class SockController {
                     )
             }
     )
-    @PostMapping("/outcome")
+    @PatchMapping("/outcome")
     public ResponseEntity<SockQntDto> outcomeSock(@RequestBody SockQntDto sockQntDto) {
         return ResponseEntity.ok(sockService.outcome(sockQntDto).orElseThrow(() -> new InvalidResultException(EXCMSG_UNEXPECTED_VALUE)));
     }
