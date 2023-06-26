@@ -57,7 +57,7 @@ public class SockController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<SockDto> deleteSock(@PathVariable long id) {
+    public ResponseEntity<SockDto> deleteSock(@PathVariable Long id) {
         return ResponseEntity.ok(sockService.deleteSock(id).orElseThrow(() -> new InvalidResultException(EXCMSG_UNEXPECTED_VALUE)));
     }
 }

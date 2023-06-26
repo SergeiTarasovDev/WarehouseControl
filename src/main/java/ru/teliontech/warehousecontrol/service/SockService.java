@@ -68,18 +68,17 @@ public class SockService {
     }
 
     public Optional<SockQntDto> income(SockQntDto inputSock) {
-        validateCottonPart(mappingUtils.mapToSock(inputSock));
-        validateQuantity(inputSock);
         return handleOperation(inputSock, OperationType.INCOME);
     }
 
     public Optional<SockQntDto> outcome(SockQntDto inputSock) {
-        validateCottonPart(mappingUtils.mapToSock(inputSock));
-        validateQuantity(inputSock);
         return handleOperation(inputSock, OperationType.OUTCOME);
     }
 
     private Optional<SockQntDto> handleOperation(SockQntDto inputSock, OperationType operationType) {
+        validateCottonPart(mappingUtils.mapToSock(inputSock));
+        validateQuantity(inputSock);
+
         Sock foundSock = findSock(inputSock);
         calculateStock(inputSock, foundSock, operationType);
 
@@ -132,13 +131,13 @@ public class SockService {
         return Optional.of(sockDto);
     }
 
-    public Optional<SockDto> deleteSock(long id) {
+    public Optional<SockDto> deleteSock(Long id) {
         Sock foundSock = findSockById(id).orElseThrow(() -> new EntityNotFoundException(EXCMSG_NOT_FOUND));
         sockRepository.delete(foundSock);
         return Optional.of(mappingUtils.mapToSockDto(foundSock));
     }
 
-    private Optional<Sock> findSockById(long id) {
+    private Optional<Sock> findSockById(Long id) {
         return sockRepository.findById(id);
     }
 
