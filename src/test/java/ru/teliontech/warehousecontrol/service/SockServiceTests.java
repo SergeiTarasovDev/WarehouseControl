@@ -12,7 +12,6 @@ import ru.teliontech.warehousecontrol.exception.EntityNotFoundException;
 import ru.teliontech.warehousecontrol.exception.InvalidArgumentException;
 import ru.teliontech.warehousecontrol.exception.NegativeStockException;
 import ru.teliontech.warehousecontrol.repository.SockRepository;
-import ru.teliontech.warehousecontrol.repository.TradingActionRepository;
 import ru.teliontech.warehousecontrol.utils.MappingUtils;
 
 import java.util.ArrayList;
