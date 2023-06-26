@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/socks")
 public class SockController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SockController.class);
     private static final String EXCMSG_UNEXPECTED_VALUE = "Unexpected value";
 
     private final SockService sockService;

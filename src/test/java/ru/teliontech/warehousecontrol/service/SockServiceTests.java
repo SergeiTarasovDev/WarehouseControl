@@ -7,7 +7,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.teliontech.warehousecontrol.dto.SockDto;
 import ru.teliontech.warehousecontrol.dto.SockQntDto;
 import ru.teliontech.warehousecontrol.entity.Sock;
-import ru.teliontech.warehousecontrol.entity.TradingAction;
 import ru.teliontech.warehousecontrol.exception.DuplicateSocksException;
 import ru.teliontech.warehousecontrol.exception.EntityNotFoundException;
 import ru.teliontech.warehousecontrol.exception.InvalidArgumentException;
@@ -22,7 +21,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.Mockito.when;
 import static ru.teliontech.warehousecontrol.service.SockService.*;
 
@@ -31,9 +29,6 @@ public class SockServiceTests {
 
     @Mock
     private SockRepository sockRepository;
-
-    @Mock
-    private TradingActionRepository tradingActionRepository;
 
     @Spy
     private MappingUtils mappingUtils;
