@@ -40,17 +40,11 @@ public class SockControllerTests {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockBean
     private SockRepository sockRepository;
 
     @MockBean
     private TradingActionRepository tradingActionRepository;
-
-    @SpyBean
-    private SockService sockService;
 
     @SpyBean
     private MappingUtils mappingUtils;
