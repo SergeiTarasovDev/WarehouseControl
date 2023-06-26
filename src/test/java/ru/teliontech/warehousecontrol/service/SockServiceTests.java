@@ -92,6 +92,16 @@ public class SockServiceTests {
     }
 
     @Test
+    public void testGetCountSocksWithParams_Negative_UndefinedOperation() {
+        String color = "blue";
+        int cottonPartLessThan = 60;
+        Throwable thrown = catchThrowable(() -> sockService.getCountSocksWithParams(color, "undefined", cottonPartLessThan));
+        assertThat(thrown)
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining(EXCMSG_NOT_FOUND);
+    }
+
+    @Test
     public void testGetCountSockWithParams_Negative_CottonPartOverRange() {
         String color = "white";
         int cottonPartGreaterThan = 120;
