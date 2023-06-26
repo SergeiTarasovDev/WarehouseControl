@@ -1,9 +1,12 @@
 package ru.teliontech.warehousecontrol.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.web.servlet.MockMvc;
 import ru.teliontech.warehousecontrol.dto.SockDto;
 import ru.teliontech.warehousecontrol.dto.SockQntDto;
 import ru.teliontech.warehousecontrol.entity.Sock;
@@ -12,6 +15,7 @@ import ru.teliontech.warehousecontrol.exception.EntityNotFoundException;
 import ru.teliontech.warehousecontrol.exception.InvalidArgumentException;
 import ru.teliontech.warehousecontrol.exception.NegativeStockException;
 import ru.teliontech.warehousecontrol.repository.SockRepository;
+import ru.teliontech.warehousecontrol.repository.TradingActionRepository;
 import ru.teliontech.warehousecontrol.utils.MappingUtils;
 
 import java.util.ArrayList;
@@ -28,6 +32,9 @@ public class SockServiceTests {
 
     @Mock
     private SockRepository sockRepository;
+
+    @Mock
+    TradingActionRepository tradingActionRepository;
 
     @Spy
     private MappingUtils mappingUtils;

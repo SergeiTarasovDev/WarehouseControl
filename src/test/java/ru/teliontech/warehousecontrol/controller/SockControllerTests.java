@@ -1,5 +1,6 @@
 package ru.teliontech.warehousecontrol.controller;
 
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,8 +28,11 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static ru.teliontech.warehousecontrol.service.SockService.LESS;
+import static ru.teliontech.warehousecontrol.service.SockService.MORE;
 
 @WebMvcTest(controllers = SockControllerTests.class)
 public class SockControllerTests {
@@ -54,6 +58,8 @@ public class SockControllerTests {
     @InjectMocks
     private SockController sockController;
 
+    private final String path = "/api/socks";
+
     @Test
     public void testFindAllSocks() throws Exception {
         List<Sock> socks = new ArrayList<>(List.of(
@@ -63,7 +69,7 @@ public class SockControllerTests {
                 new Sock(4L, "white", 30, 1)
         ));
         when(sockRepository.findAll()).thenReturn(socks);
-        mockMvc.perform(get("/api/socks/all")
+        mockMvc.perform(get(path + "/all")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -72,7 +78,6 @@ public class SockControllerTests {
     @Test
     public void testGetCountSocksWithParams_WhiteMoreThan40() throws Exception {
         String color = "white";
-        String operation = "moreThan";
         int cottonPart = 40;
 
         List<Sock> socks = new ArrayList<>(List.of(
@@ -86,11 +91,12 @@ public class SockControllerTests {
                 .mapToInt(Sock::getStock)
                 .sum();
 
+        when(sockRepository.findAllByColorAndCottonPartGreaterThan(color, cottonPart)).thenReturn(socks);
         when(sockRepository.getStockSumByColorAndCottonPartGreaterThan(color, cottonPart)).thenReturn(expectedSum);
         String response = mockMvc.perform(MockMvcRequestBuilders
-                        .get("/api/socks")
+                        .get(path)
                         .queryParam("color", color)
-                        .queryParam("operation", operation)
+                        .queryParam("operation", MORE)
                         .queryParam("cottonPart", String.valueOf(cottonPart))
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
@@ -104,7 +110,6 @@ public class SockControllerTests {
     @Test
     public void testGetCountSocksWithParams_WhiteLessThan40() throws Exception {
         String color = "white";
-        String operation = "lessThan";
         int cottonPart = 40;
 
         List<Sock> socks = new ArrayList<>(List.of(
@@ -118,12 +123,13 @@ public class SockControllerTests {
                 .mapToInt(Sock::getStock)
                 .sum();
 
+        when(sockRepository.findAllByColorAndCottonPartLessThan(color, cottonPart)).thenReturn(socks);
         when(sockRepository.getStockSumByColorAndCottonPartLessThan(color, cottonPart)).thenReturn(expectedSum);
 
         String response = mockMvc.perform(MockMvcRequestBuilders
-                        .get("/api/socks")
+                        .get(path)
                         .queryParam("color", color)
-                        .queryParam("operation", operation)
+                        .queryParam("operation", LESS)
                         .queryParam("cottonPart", String.valueOf(cottonPart))
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
@@ -152,7 +158,7 @@ public class SockControllerTests {
         when(sockRepository.findByColorAndCottonPart(sockQntDto.getColor(), sockQntDto.getCottonPart())).thenReturn(socks);
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/socks/income")
+                        .patch(path + "/income")
                         .content(sockObj.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
@@ -184,7 +190,7 @@ public class SockControllerTests {
         when(sockRepository.findByColorAndCottonPart(sockQntDto.getColor(), sockQntDto.getCottonPart())).thenReturn(socks);
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/socks/outcome")
+                        .patch(path + "/outcome")
                         .content(sockObj.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
@@ -203,7 +209,7 @@ public class SockControllerTests {
         JSONObject sockObj = getJsonObject(sockDto);
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .post("/api/socks")
+                        .post(path)
                         .content(sockObj.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
@@ -229,7 +235,7 @@ public class SockControllerTests {
         when(sockRepository.findById(sockDto.getId())).thenReturn(sock);
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .patch("/api/socks")
+                        .patch(path)
                         .content(sockObj.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
@@ -257,7 +263,7 @@ public class SockControllerTests {
         when(sockRepository.findById(any(Long.class))).thenReturn(optionalSock);
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .delete("/api/socks/3")
+                        .delete(path + "/3")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
