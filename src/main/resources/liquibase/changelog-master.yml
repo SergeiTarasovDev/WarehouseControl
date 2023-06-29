@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: liquibase/scripts/init.sql
+  - include:
+      file: liquibase/scripts/testDataInsert.sql
